@@ -6,6 +6,7 @@
 //#define TYPEC_DP 1
 /{
 	board = "A733";
+	model = "Orange Pi 4 Pro";
 	compatible = "xunlong,orangepi-4-pro", "arm,sun60iw2p1";
 	aliases {
 		arisc-config = &arisc_config;
@@ -1803,7 +1804,7 @@
 	pmu1: pmu@34 {
 		compatible = "x-powers,axp515";
 		reg = <0x34>;
-		status = "okay";
+		status = "disabled"; /* OPi4Pro: no battery/BMU; probe fails -22 */
 		interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-parent = <&nmi_intc>;
 		x-powers,drive-vbus-en;
@@ -2791,7 +2792,7 @@
                   "SPK", "LINEOUTRN_PIN",
                   "HPOUTL", "HPOUTL_PIN",
                   "HPOUTR", "HPOUTR_PIN";
-    status        = "okay";
+    status        = "disabled"; /* OPi4Pro: AC101 codec not populated (board uses ES8388 on i2s4); i2s0_plat disabled -> silences simple_dai_link_of failed */
     i2s0_cpu: soundcard-mach,cpu {
         sound-dai = <&i2s0_plat>;
         /* note: pll freq = 24.576M or 22.5792M * pll-fs */
@@ -3826,6 +3827,6 @@
        vcc-supply = <&reg_dldo6>;
        vccq-supply = <&reg_dcdc8>;
        vccq2-supply = <&reg_dcdc8>;
-       status = "okay";
+       status = "disabled";
 };
 

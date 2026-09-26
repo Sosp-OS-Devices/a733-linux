@@ -300,6 +300,21 @@ static void csi_par_g_output_size(struct csi_dev *csi,
 static int __csi_set_fmt_hw(struct csi_dev *csi)
 {
 	struct v4l2_mbus_framefmt *mf = &csi->mf;
+
+	if (!csi->csi_fmt) {
+		/*
+		 * The active format was never negotiated on this subdev
+		 * (media-graph format propagation did not reach it, e.g.
+		 * when the device is reopened and streamed without a full
+		 * S_INPUT/S_FMT cycle in the same open). Dereferencing
+		 * csi_fmt below oopses inside STREAMON, which on this SoC
+		 * takes down the whole system. Fail instead.
+		 */
+		vin_err("csi%d: no active format, aborting stream on\n",
+			csi->id);
+		return -EPIPE;
+	}
+
 	struct prs_ncsi_bt656_header bt656_header;
 	struct prs_mcsi_if_cfg mcsi_if;
 	struct prs_cap_mode mode;
@@ -519,7 +534,11 @@ static int sunxi_csi_subdev_s_stream(struct v4l2_subdev *sd, int enable)
 		csic_prs_enable(csi->id);
 		csic_prs_disable(csi->id);
 		csic_prs_enable(csi->id);
-		__csi_set_fmt_hw(csi);
+		if (__csi_set_fmt_hw(csi)) {
+			csic_prs_disable(csi->id);
+			csic_prs_pclk_en(csi->id, 0);
+			return -EPIPE;
+		}
 	} else {
 		csi->tvin.flag = false;
 #ifndef SUPPORT_ISP_TDM
